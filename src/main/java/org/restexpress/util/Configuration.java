@@ -2,6 +2,7 @@ package org.restexpress.util;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Properties;
 
 import org.restexpress.common.exception.ConfigurationException;
@@ -23,6 +24,8 @@ public class Configuration extends Environment {
 	//如果url路径匹配下面则进行权限检查，只检查是否需要登录
 	private String permissionCheck = "/priv/";
 	
+	private HashMap<String,String> session;
+
 	private String stopCommandStr = "stop";
 	
 	private static final String nettyConfigFile = "netty.properties";
@@ -42,6 +45,10 @@ public class Configuration extends Environment {
 	private long bothIdleTimeOut = 0;
 	private int ioRation = 50;
 	private int ioSubThreadCount = 0;
+	
+	public HashMap<String, String> getSession() {
+		return session;
+	}
 	
 	//固定写死加载的netty配置文件
 	@Override
@@ -81,6 +88,13 @@ public class Configuration extends Environment {
 		}catch(Exception e){			
 		}
 		
+		String sessionStr = p.getProperty("session");
+		if (sessionStr != null){
+			session = new HashMap<>();
+			String[] str = sessionStr.split(";");
+			for(String s: str)
+				session.put(s.substring(0,s.indexOf("=")),s.substring(s.indexOf("=")+1));
+		}
 		
 		value = p.getProperty("permissionCheck");
 		if (value != null){

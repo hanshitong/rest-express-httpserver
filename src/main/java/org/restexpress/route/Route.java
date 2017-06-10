@@ -331,8 +331,15 @@ public abstract class Route
         {
 			if (request.getPath().indexOf(RestExpress.getConfig().getPermissionCheck()) >= 0)
 			{			
-				if (si == null)
-					si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
+				if (si == null){
+					HashMap<String,String> privPath = RestExpress.getConfig().getSession();
+					if (privPath != null)
+						for(String path: privPath.keySet())
+							if (request.getPath().indexOf(path) >=0){
+								si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(path));
+								break;
+							}
+				}
 				if (si == null)
 					return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
 				if (sessionInfo == null)
@@ -395,25 +402,26 @@ public abstract class Route
 						values[i] = Double.valueOf(value);
 					else if (cls.equals(Date.class))
 						values[i] = (value != null && value.length() > 0) ?sdf.parse(value):null;	
-					else if (AdminSessionInfo.class.isAssignableFrom(cls)){
-						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
-						values[i] = intf.getAdminSessionInfo(request);
-					}
-						//注入一个会话信息对象
-					else if (SessionInfo.class.isAssignableFrom(cls)){						 
-						if (si == null)
-							si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
-						if (si == null)
-							return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
-						if (sessionInfo == null)
-							sessionInfo = si.getSession(request);						
-						if (sessionInfo != null){
-							ServerResponse sr = si.checkSession(sessionInfo);
-						 	if (sr != null)
-						 		return sr;
-						}
+					else if (SessionInfo.class.isAssignableFrom(cls)){
+						
+//						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
 						values[i] = sessionInfo;
 					}
+						//注入一个会话信息对象
+//					else if (SessionIntf.class.isAssignableFrom(cls)){						 
+//						if (si == null)
+//							si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
+//						if (si == null)
+//							return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
+//						if (sessionInfo == null)
+//							sessionInfo = si.getSession(request);						
+//						if (sessionInfo != null){
+//							ServerResponse sr = si.checkSession(sessionInfo);
+//						 	if (sr != null)
+//						 		return sr;
+//						}
+//						values[i] = sessionInfo;
+//					}
 					//权限信息
 					else if (cls.equals(AuthorityIntf.class)){
 						AuthorityIntf auth = RestExpress.getSpringCtx().getBean(AuthorityIntf.class);
