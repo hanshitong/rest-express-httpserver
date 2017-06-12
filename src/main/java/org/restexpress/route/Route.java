@@ -405,6 +405,18 @@ public abstract class Route
 					else if (SessionInfo.class.isAssignableFrom(cls)){
 						
 //						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
+						//有些接口不是以/priv/开头的,但是需要用户回话信息做特殊判断，这里需要重新获取会话(如果有的话)
+						if (sessionInfo == null){ 
+								HashMap<String,String> privPath = RestExpress.getConfig().getSession();
+								if (privPath != null)
+									for(String path: privPath.keySet())
+										if (request.getPath().indexOf(path) >=0){
+											si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(path));
+											sessionInfo = si.getSession(request);
+											break;
+										}
+							 
+						}
 						values[i] = sessionInfo;
 					}
 						//注入一个会话信息对象
