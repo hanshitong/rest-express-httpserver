@@ -1,4 +1,5 @@
 package org.restexpress.domain.ex;
+ 
 
 /**
  * 服务返回的封装--为了兼容之前的接口和亿迅的共用基类字段一样
@@ -7,6 +8,15 @@ package org.restexpress.domain.ex;
  */
 public class ServerResponse {
 	public static final int SUCCESS_CODE = 0;
+	
+	public static ServerResponse SUCCESS_RESPONSE = new ServerResponse(0,null);
+	
+	public static ServerResponse INTERNAL_ERROR = new ServerResponse(500,"服务内部错误");
+	
+	public static ServerResponse NOT_AUTH_ERROR = new ServerResponse(401,"无权限");
+	
+	public static ServerResponse FORBIDDEN_ERROR = new ServerResponse(403,"禁止访问");
+	
 	//其他错误码,可用httpmethod httpstatus的代码
 	
 	private int code;
@@ -14,6 +24,10 @@ public class ServerResponse {
 	private String result;
 	  
 	private String statusText;
+	
+	public ServerResponse(){
+		
+	}
 	
 	public ServerResponse(int status,String statusText,String result){
 		this.setCode(status);
