@@ -24,7 +24,8 @@ public class Configuration extends Environment {
 	//如果url路径匹配下面则进行权限检查，只检查是否需要登录
 	private String permissionCheck = "/priv/";
 	
-	private HashMap<String,String> session;
+	private HashMap<String,String> sessionByPath;
+	private HashMap<String,String> sessionByClass;
 
 	private String stopCommandStr = "stop";
 	
@@ -46,8 +47,8 @@ public class Configuration extends Environment {
 	private int ioRation = 50;
 	private int ioSubThreadCount = 0;
 	
-	public HashMap<String, String> getSession() {
-		return session;
+	public HashMap<String, String> getSessionByPath() {
+		return sessionByPath;
 	}
 	
 	//固定写死加载的netty配置文件
@@ -88,13 +89,22 @@ public class Configuration extends Environment {
 		}catch(Exception e){			
 		}
 		
-		String sessionStr = p.getProperty("session");
+		String sessionStr = p.getProperty("sessionByPath");
 		if (sessionStr != null){
-			session = new HashMap<>();
+			sessionByPath = new HashMap<>();
 			String[] str = sessionStr.split(";");
 			for(String s: str)
-				session.put(s.substring(0,s.indexOf("=")),s.substring(s.indexOf("=")+1));
+				sessionByPath.put(s.substring(0,s.indexOf("=")),s.substring(s.indexOf("=")+1));
 		}
+		
+		sessionStr = p.getProperty("sessionByClass");
+		if (sessionStr != null){
+			sessionByClass = new HashMap<>();
+			String[] str = sessionStr.split(";");
+			for(String s: str)
+				sessionByClass.put(s.substring(0,s.indexOf("=")),s.substring(s.indexOf("=")+1));
+		}
+		
 		
 		value = p.getProperty("permissionCheck");
 		if (value != null){
@@ -342,6 +352,10 @@ public class Configuration extends Environment {
 
 	public int getIoSubThreadCount() {
 		return ioSubThreadCount ;
+	}
+
+	public HashMap<String,String> getSessionByClass() {
+		return sessionByClass;
 	}
 
 }

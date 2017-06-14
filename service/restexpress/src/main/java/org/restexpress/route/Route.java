@@ -332,7 +332,7 @@ public abstract class Route
 			if (request.getPath().indexOf(RestExpress.getConfig().getPermissionCheck()) >= 0)
 			{			
 				if (si == null){
-					HashMap<String,String> privPath = RestExpress.getConfig().getSession();
+					HashMap<String,String> privPath = RestExpress.getConfig().getSessionByPath();
 					if (privPath != null)
 						for(String path: privPath.keySet())
 							if (request.getPath().indexOf(path) >=0){
@@ -406,12 +406,12 @@ public abstract class Route
 						
 //						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
 						//有些接口不是以/priv/开头的,但是需要用户回话信息做特殊判断，这里需要重新获取会话(如果有的话)
-						if (sessionInfo == null){ 
-								HashMap<String,String> privPath = RestExpress.getConfig().getSession();
+						if (sessionInfo == null){ 	
+							HashMap<String,String> privPath = RestExpress.getConfig().getSessionByClass();
 								if (privPath != null)
-									for(String path: privPath.keySet())
-										if (request.getPath().indexOf(path) >=0){
-											si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(path));
+									for(String className: privPath.keySet())
+										if (cls.getName().equals(className)){
+											si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(className));
 											sessionInfo = si.getSession(request);
 											break;
 										}
@@ -623,5 +623,9 @@ public abstract class Route
 					}	
 		}
 		return fillOnce?ins:null;
+	}
+	
+	public static void main(String[] args){
+		System.out.println(AdminSessionInfo.class.getName());
 	}
 }
