@@ -371,7 +371,7 @@ public abstract class Route
 				if (paramName == null)
 					paramName = paramNames[i];
 				//参数值先从get里取，取不到再从post里获取,因此如果post，get都传了相同参数，以post为准
-				String value = (String)postValue.get(paramName);	
+				Object value = postValue.get(paramName);	
 				 
 				if ((paramAn instanceof RequestParam)){
 					if (value==null){
@@ -388,20 +388,11 @@ public abstract class Route
 					  values[i] = request;
 					else if (cls.equals(org.restexpress.Response.class))
 						values[i] = response;
-					else if (cls.equals(String.class)) //已经utf-8解码
+					else if (cls.equals(String.class) || cls.equals(Integer.class) || cls.equals(Long.class)
+							|| cls.equals(Byte.class) || cls.equals(Short.class) || cls.equals(Double.class)) //已经utf-8解码
 						values[i] = value;
-					else if (cls.equals(Integer.class) && value != null)
-						values[i] = Integer.valueOf(value);
-					else if (cls.equals(Long.class) && value != null)
-						values[i] = Long.valueOf(value);
-					else if (cls.equals(Byte.class) && value != null)	
-						values[i] = Byte.valueOf(value);
-					else if (cls.equals(Short.class) && value != null)
-						values[i] = Short.valueOf(value);
-					else if (cls.equals(Double.class) && value != null)
-						values[i] = Double.valueOf(value);
-					else if (cls.equals(Date.class))
-						values[i] = (value != null && value.length() > 0) ?sdf.parse(value):null;	
+					else if (cls.equals(Date.class)) //日期，也可能是long
+						values[i] = (value != null && value.toString().length() > 0) ?sdf.parse(value.toString()):null;	
 					else if (SessionInfo.class.isAssignableFrom(cls)){
 						
 //						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
@@ -435,40 +426,40 @@ public abstract class Route
 //						values[i] = sessionInfo;
 //					}
 					//权限信息
-					else if (cls.equals(AuthorityIntf.class)){
-						AuthorityIntf auth = RestExpress.getSpringCtx().getBean(AuthorityIntf.class);
-						if (auth == null)
-							return new ServerResponse(500,"需要实现AuthorityIntf以获取权限信息Spring服务",request.getUrl());
-						if (si == null)
-							si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
-						if (si == null)
-							return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
-						if (sessionInfo == null)
-							sessionInfo = si.getSession(request);
-						auth.setSessionInfo(sessionInfo);
-						
-						//下面这个并非一定要的，所以可空
-						AuthRightIntf auth2 = RestExpress.getSpringCtx().getBean(AuthRightIntf.class);
-						if (auth2 != null){
-							auth.setAuthRightIntf(auth2);
-							auth2.setSessionInfo(sessionInfo);
-						}
-																		
-						values[i] = auth;
-					}
-					else if (cls.equals(AuthRightIntf.class)){
-						AuthRightIntf auth = RestExpress.getSpringCtx().getBean(AuthRightIntf.class);
-						if (auth == null)
-							return new ServerResponse(500,"需要实现AuthRightIntf以获取权限信息Spring服务",request.getUrl());
-						if (si == null)
-							si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
-						if (si == null)
-							return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
-						if (sessionInfo == null)
-							sessionInfo = si.getSession(request);
-						auth.setSessionInfo(sessionInfo);
-						values[i] = auth;
-					}					
+//					else if (cls.equals(AuthorityIntf.class)){
+//						AuthorityIntf auth = RestExpress.getSpringCtx().getBean(AuthorityIntf.class);
+//						if (auth == null)
+//							return new ServerResponse(500,"需要实现AuthorityIntf以获取权限信息Spring服务",request.getUrl());
+//						if (si == null)
+//							si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
+//						if (si == null)
+//							return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
+//						if (sessionInfo == null)
+//							sessionInfo = si.getSession(request);
+//						auth.setSessionInfo(sessionInfo);
+//						
+//						//下面这个并非一定要的，所以可空
+//						AuthRightIntf auth2 = RestExpress.getSpringCtx().getBean(AuthRightIntf.class);
+//						if (auth2 != null){
+//							auth.setAuthRightIntf(auth2);
+//							auth2.setSessionInfo(sessionInfo);
+//						}
+//																		
+//						values[i] = auth;
+//					}
+//					else if (cls.equals(AuthRightIntf.class)){
+//						AuthRightIntf auth = RestExpress.getSpringCtx().getBean(AuthRightIntf.class);
+//						if (auth == null)
+//							return new ServerResponse(500,"需要实现AuthRightIntf以获取权限信息Spring服务",request.getUrl());
+//						if (si == null)
+//							si = RestExpress.getSpringCtx().getBean(SessionIntf.class);			
+//						if (si == null)
+//							return new ServerResponse(500,"需要实现SessionIntf以获取会话信息Spring服务",request.getUrl());
+//						if (sessionInfo == null)
+//							sessionInfo = si.getSession(request);
+//						auth.setSessionInfo(sessionInfo);
+//						values[i] = auth;
+//					}					
 					else if (!cls.isPrimitive()){ //注入一个复杂对象							
 						values[i] = SerializeUtil.get().readValue(
 								SerializeUtil.get().writeValueAsBytes(postValue),cls);
