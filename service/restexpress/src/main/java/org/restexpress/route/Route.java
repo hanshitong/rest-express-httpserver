@@ -388,6 +388,8 @@ public abstract class Route
 					  values[i] = request;
 					else if (cls.equals(org.restexpress.Response.class))
 						values[i] = response;
+					else if (cls.equals(String.class)) //utf-8解码了
+						values[i] = value;
 					else if (cls.equals(Integer.class) && value != null)
 						values[i] = Integer.valueOf(value);
 					else if (cls.equals(Long.class) && value != null)
