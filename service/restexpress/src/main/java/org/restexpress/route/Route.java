@@ -371,7 +371,7 @@ public abstract class Route
 				if (paramName == null)
 					paramName = paramNames[i];
 				//参数值先从get里取，取不到再从post里获取,因此如果post，get都传了相同参数，以post为准
-				Object value = postValue.get(paramName);	
+				String value = (String)postValue.get(paramName);	
 				 
 				if ((paramAn instanceof RequestParam)){
 					if (value==null){
@@ -388,11 +388,18 @@ public abstract class Route
 					  values[i] = request;
 					else if (cls.equals(org.restexpress.Response.class))
 						values[i] = response;
-					else if (cls.equals(String.class) || cls.equals(Integer.class) || cls.equals(Long.class)
-							|| cls.equals(Byte.class) || cls.equals(Short.class) || cls.equals(Double.class)) //已经utf-8解码
-						values[i] = value;
-					else if (cls.equals(Date.class)) //日期，也可能是long
-						values[i] = (value != null && value.toString().length() > 0) ?sdf.parse(value.toString()):null;	
+					else if (cls.equals(Integer.class) && value != null)
+						values[i] = Integer.valueOf(value);
+					else if (cls.equals(Long.class) && value != null)
+						values[i] = Long.valueOf(value);
+					else if (cls.equals(Byte.class) && value != null)	
+						values[i] = Byte.valueOf(value);
+					else if (cls.equals(Short.class) && value != null)
+						values[i] = Short.valueOf(value);
+					else if (cls.equals(Double.class) && value != null)
+						values[i] = Double.valueOf(value);
+					else if (cls.equals(Date.class))
+						values[i] = (value != null && value.length() > 0) ?sdf.parse(value):null;	
 					else if (SessionInfo.class.isAssignableFrom(cls)){
 						
 //						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
