@@ -39,10 +39,8 @@ import org.restexpress.Request;
 import org.restexpress.Response;
 import org.restexpress.RestExpress;
 import org.restexpress.common.util.StringUtils;
-import org.restexpress.domain.ex.AdminSessionInfo;
 import org.restexpress.domain.ex.ServerResponse;
 import org.restexpress.domain.ex.SessionInfo;
-import org.restexpress.intf.AdminSessionIntf;
 import org.restexpress.intf.AuthRightIntf;
 import org.restexpress.intf.AuthorityIntf;
 import org.restexpress.intf.SessionIntf;
@@ -389,31 +387,53 @@ public abstract class Route
 						values[i] = response;
 					else if (cls.equals(String.class)) //utf-8解码了
 						values[i] = (String)value;
-					else if (cls.equals(Integer.class))
-						values[i] = (Integer)value;
-					else if (cls.equals(Long.class))
-						values[i] = (Long)value;
-					else if (cls.equals(Byte.class))	
-						values[i] = (Byte)value;
-					else if (cls.equals(Short.class))
-						values[i] = (Short)value;
-					else if (cls.equals(Double.class))
-						values[i] = (Double)value;
+					else if (cls.equals(Integer.class)){
+						if (value instanceof String)
+							values[i] = Integer.parseInt((String)value);
+						else	
+							values[i] = (Integer)value;
+					}
+					else if (cls.equals(Long.class)){
+						if (value instanceof String)
+							values[i] = Long.parseLong((String)value);
+						else
+							values[i] = (Long)value;
+					}
+					else if (cls.equals(Byte.class)){	
+						if (value instanceof String)
+							values[i] = Byte.parseByte((String)value);
+						else
+							values[i] = (Byte)value;
+					}
+					else if (cls.equals(Short.class)){
+						if (value instanceof String)
+							values[i] = Short.parseShort((String)value);
+						else
+							values[i] = (Short)value;
+					}
+					else if (cls.equals(Double.class)){
+						if (value instanceof String)
+							values[i] = Double.parseDouble((String)value);
+						else
+							values[i] = (Double)value;
+					}
 					else if (cls.equals(Date.class))
 						values[i] = (value != null && value.toString().length() > 0) ?sdf.parse(value.toString()):null;	
 					else if (SessionInfo.class.isAssignableFrom(cls)){
-						
-//						AdminSessionIntf intf = RestExpress.getSpringCtx().getBean(AdminSessionIntf.class);
 						//有些接口不是以/priv/开头的,但是需要用户回话信息做特殊判断，这里需要重新获取会话(如果有的话)
 						if (sessionInfo == null){ 	
-							HashMap<String,String> privPath = RestExpress.getConfig().getSessionByClass();
-								if (privPath != null)
-									for(String className: privPath.keySet())
-										if (cls.getName().equals(className)){
-											si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(className));
-											sessionInfo = si.getSession(request);
-											break;
-										}
+							SessionInfo obj = (SessionInfo)cls.newInstance();  //这里多创建了一个实例,能否避免?
+							si = (SessionIntf) RestExpress.getSpringCtx().getBean(obj.getSessionImpl());
+							obj = null;
+							sessionInfo = si.getSession(request);
+//							HashMap<String,String> privPath = RestExpress.getConfig().getSessionByClass();
+//								if (privPath != null)
+//									for(String className: privPath.keySet())
+//										if (cls.getName().equals(className)){
+//											si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(className));
+//											sessionInfo = si.getSession(request);
+//											break;
+//										}
 							 
 						}
 						values[i] = sessionInfo;
@@ -625,6 +645,6 @@ public abstract class Route
 	}
 	
 	public static void main(String[] args){
-		System.out.println(AdminSessionInfo.class.getName());
+		 
 	}
 }
