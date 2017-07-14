@@ -300,13 +300,14 @@ public abstract class Route
 	 * 形式1，get
 	 * http://xxxx/param1=value1&param2=value2
 	 * 
-	 * 形式2, get/post混杂,body为普通的参数形式
-	 * http://xxxx/param1=value1&param2=value2
+	 * 形式2, 普通表单方式提交 post,body为普通的key=value,&分割的参数形式
+	 * http://www.xxxx.com/xxx
 	 * body:  param3=value3&param4=value4
 	 * 
-	 * 形式3 get/post混杂，但是content-type 为json
-	 * http://xxxx/param1=value1&param2=value2
-	 * body:  {param3: "value3","param4":"value4"}
+	 * 形式3 application/json text/json 方式
+	 * http://www.xxxx.com/xxx
+	 * 注意，如果使用这种方式提交，参数除了框架注入的参数(request,response,会话对象)外，只支持一个自定义参数
+	 * body:  {param3: "value3","param4":"value4"} 或者 [{id: 123, name: "abc"}]
 	 * 
 	 * 后续可以添加注入个复杂类，类似springmvc
 	 * 如果对端使用的netty把对象编码后过来，这里不需要解码对象为map再转成对象，效率低，直接使用getBody函数即可
@@ -368,6 +369,9 @@ public abstract class Route
 				//参数名，先用RequestParam里的别名，如果没有定义别名，则使用参数本身名字
 				if (paramName == null)
 					paramName = paramNames[i];
+				
+//				Object value = null;
+				
 				//参数值先从get里取，取不到再从post里获取,因此如果post，get都传了相同参数，以post为准
 				Object value = postValue.get(paramName);	
 				if ((paramAn instanceof RequestParam)){
