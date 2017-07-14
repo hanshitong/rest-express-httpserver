@@ -319,6 +319,14 @@ public abstract class Route
 	@SuppressWarnings(value={"rawtypes","unchecked"})
 	public Object invoke(Request request, Response response)
 	{
+		boolean post = (request.getEffectiveHttpMethod().equals(HttpMethod.POST));
+		String contentType = request.getHeader(HttpHeaders.Names.CONTENT_TYPE);
+		boolean isjson = false;
+		if (contentType != null){ 
+			contentType = contentType.toLowerCase();
+		    isjson = contentType.indexOf("text/json") >= 0 || contentType.indexOf("application/json") >= 0;
+		}
+		
 		//因为只支持get,post
 		if (method.compareTo(HttpMethod.POST) == 0 && method.compareTo(request.getEffectiveHttpMethod()) != 0)
 			return new ServerResponse(405,"http请求类型不匹配,请使用" + method.name());
@@ -351,7 +359,7 @@ public abstract class Route
 			}
 			
 			String[] paramNames = localVar.getParameterNames(action);
-			Map<String,Object> postValue = getPostValue(request,paramNames);
+			Map<String,Object> postValue = getPostValue(request,paramNames,post,isjson);
 						
 			//传过来的可能比action目标申明的方法参数少（有默认参数值）
 			Class<?>[] types = action.getParameterTypes();									
@@ -370,9 +378,6 @@ public abstract class Route
 				if (paramName == null)
 					paramName = paramNames[i];
 				
-//				Object value = null;
-				
-				//参数值先从get里取，取不到再从post里获取,因此如果post，get都传了相同参数，以post为准
 				Object value = postValue.get(paramName);	
 				if ((paramAn instanceof RequestParam)){
 					if (value==null){
@@ -492,9 +497,11 @@ public abstract class Route
 //						auth.setSessionInfo(sessionInfo);
 //						values[i] = auth;
 //					}					
-					else if (!cls.isPrimitive()){ //注入一个复杂对象							
-						values[i] = SerializeUtil.get().readValue(
-								SerializeUtil.get().writeValueAsBytes(postValue),cls);
+					else if (!cls.isPrimitive()){ //注入一个复杂对象	
+						if (isjson)
+							values[i] = request.getBodyAs(cls);
+						else
+							values[i] = SerializeUtil.get().convertValue(postValue,cls);
 					}
 				}catch(NumberFormatException | ParseException e){					
 					return new ServerResponse(400,new StringBuilder("参数").append(paramName).
@@ -534,20 +541,14 @@ public abstract class Route
 	}
 
 	/**
-	 * 返回get里的参数和post里的参数，如果get 和post都出现，以post为准
+	 * 返回get里的参数和post里的参数，如果get 和post都出现，以post为准,如果是application/json  text/json
+	 * 方式提交，return 空的参数体
 	 * @param request
 	 * @return
 	 */
-	private Map<String, Object> getPostValue(Request request,String[] paramNames) {
-		boolean post = (request.getEffectiveHttpMethod().equals(HttpMethod.POST));
-		String contentType = request.getHeader(HttpHeaders.Names.CONTENT_TYPE);
-		boolean isjson = false;
-		if (contentType != null){ 
-			contentType = contentType.toLowerCase();
-		    isjson = contentType.indexOf("text/json") >= 0 || contentType.indexOf("application/json") >= 0;
-		}
+	private Map<String, Object> getPostValue(Request request,String[] paramNames,boolean post,boolean isjson) {
 		HashMap<String, Object> postValue = new HashMap<>();
-		
+		if (post && isjson) return postValue;
 		//从url串里获取参数
 		if (!post)
 			for(String key : request.getQueryStringMap().keySet())
@@ -560,94 +561,18 @@ public abstract class Route
 		for(String key: paramNames)
 			postValue.put(key,request.getHeader(key));
 		 
-		if (post){			
-			if (isjson){ // application/json text/json 方式
-				try{			
-//					String value = URLDecoder.decode(request.getBody().toString(ContentType.CHARSET),ContentType.ENCODING);
-					HashMap value = request.getBodyAs(HashMap.class);
-					postValue.putAll(value);
-				}catch(Exception e){
-					e.printStackTrace();
-					return null;
+		if (post && !isjson ){			
+			Map<String, List<String>> tmp =  request.getBodyFromUrlFormEncoded();
+			if (tmp != null){					 					 
+				for(String key: tmp.keySet()){
+					List<String> value = tmp.get(key);
+					postValue.put(key,value.get(0));	//这里我们只取第一个值，所以不支持数组的方式					 
 				}
-			}
-			else{	// application/x-www-form-urlencoded,一般表单提交方式,title=test&sub%5B%5D=1&sub%5B%5D=2&sub%5B%5D=3
-				Map<String, List<String>> tmp =  request.getBodyFromUrlFormEncoded();
-				if (tmp != null){					 					 
-					for(String key: tmp.keySet()){
-						List<String> value = tmp.get(key);
-						postValue.put(key,value.get(0));	//这里我们只取第一个值，所以不支持数组的方式					 
-					}
-				}				
 			}
 		}
 		return postValue;
 	}
 
-	/**
-	 * 仅限于pojo对象，比如实体,bean等
-	 * @param request
-	 * @param cls
-	 * @param paramNames
-	 * @return
-	 */
-	private Object getComplexObjectValue(Request request, Class cls,Map<String,List<String>> postValue) {
-		Object ins = null;
-		Method[] ms = null;
-		try{
-			ins = cls.newInstance();
-			ms = cls.getDeclaredMethods();			
-		}catch(Exception e){
-			//忽略不能注入复杂对象的错误
-			return null;
-		} 
-		
-		boolean fillOnce = false;
-		if (ms != null){
-			//url里?后面显示传的
-			Set<String> params = new HashSet<>(request.getQueryStringMap().keySet());			
-			//url path里传的,个人觉得还不如把整个的参数合并到request,不知道restexpress为何分开这2个部分参数			
-			params.addAll(this.urlMatcher.getParameterNames());
-			//post方式传的
-			if (postValue != null)
-				params.addAll(postValue.keySet());			
-			for(Method m: ms)
-				for(String str: params)
-					if (("set" + str.substring(0,1).toUpperCase() + str.substring(1)).equals(m.getName()))
-					try{	
-						String value = request.getHeader(str); 					
-						if (value == null && postValue != null)
-						{
-							List<String> list = postValue.get(str);
-							//因为只取第一个，所以不能以传数组的方式传递参数
-							if (list != null && list.size() > 0)
-								value = URLDecoder.decode(list.get(0),"utf-8");
-						}
-						Class[] types = m.getParameterTypes(); 
-						if (types.length == 1){
-							if (types[0].equals(String.class))  
-								m.invoke(ins,value);
-							else if (types[0].equals(Integer.class))
-								m.invoke(ins,Integer.parseInt(value));
-							else if (types[0].equals(Long.class))
-								m.invoke(ins,Long.valueOf(value));
-							else if (types[0].equals(Byte.class))	
-								m.invoke(ins,Byte.valueOf(value));
-							else if (types[0].equals(Short.class))
-								m.invoke(ins,Short.valueOf(value));
-							else if (types[0].equals(Double.class))
-								m.invoke(ins,Double.valueOf(value));
-							else if (types[0].equals(Date.class))
-								m.invoke(ins,sdf.parse(value));							
-							fillOnce = true;
-						}
-					}catch(Exception e){
-						
-					}	
-		}
-		return fillOnce?ins:null;
-	}
-	
 	public static void main(String[] args){
 		 
 	}
