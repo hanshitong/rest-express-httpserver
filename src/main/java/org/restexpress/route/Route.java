@@ -19,6 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -49,6 +50,9 @@ import org.restexpress.url.UrlMatcher;
 import org.restexpress.util.SerializeUtil;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 /**
  * A Route is an immutable relationship between a URL pattern and a REST
@@ -362,7 +366,8 @@ public abstract class Route
 			Map<String,Object> postValue = getPostValue(request,paramNames,post,isjson);
 						
 			//传过来的可能比action目标申明的方法参数少（有默认参数值）
-			Class<?>[] types = action.getParameterTypes();									
+			Class[] types = action.getParameterTypes();	
+			Type[] gtype = action.getGenericParameterTypes();
 			Object[] values = new Object[types.length]; 
 			Annotation[][] paramsAn = action.getParameterAnnotations();
 			int i = 0;			 
@@ -426,8 +431,8 @@ public abstract class Route
 						else
 							values[i] = (Double)value;
 					}
-					else if (cls.equals(Date.class))
-						values[i] = (value != null && value.toString().length() > 0) ?sdf.parse(value.toString()):null;	
+//					else if (cls.equals(Date.class))
+//						values[i] = (value != null && value.toString().length() > 0) ?sdf.parse(value.toString()):null;	
 					else if (SessionInfo.class.isAssignableFrom(cls)){
 						//有些接口不是以/priv/开头的,但是需要用户回话信息做特殊判断，这里需要重新获取会话(如果有的话)
 						if (sessionInfo == null){ 	
@@ -497,13 +502,16 @@ public abstract class Route
 //						auth.setSessionInfo(sessionInfo);
 //						values[i] = auth;
 //					}					
-					else if (!cls.isPrimitive()){ //注入一个复杂对象	
-						if (isjson)
-							values[i] = request.getBodyAs(cls);
+					else if (!cls.isPrimitive()){ //注入一个复杂对象	 
+						if (isjson){
+//							values[i] = request.getBodyAs(cls);
+							JavaType jt = TypeFactory.defaultInstance().constructType(gtype[i]);
+							values[i] = SerializeUtil.get().readValue(request.getBodyAsStream(),jt);
+						}
 						else
 							values[i] = SerializeUtil.get().convertValue(postValue,cls);
 					}
-				}catch(NumberFormatException | ParseException e){					
+				}catch(NumberFormatException  e){					
 					return new ServerResponse(400,new StringBuilder("参数").append(paramName).
 							append("值:").append(request.getHeader(paramName)).append("无法转成:").
 							append(cls.getName()).toString());					 
