@@ -49,3 +49,6 @@ bind() 添加执行spring初始化完毕后执行用户的特定对象方法
    controller类，不能是被cglib修改后或代理的类(比如hibernate是使用cglib实现的，实际类名后是有$$或数字的类似的),否则会因为无法根据动态代理后的类找到
    对应的方法而无法进行url到对应类对应方法的映射,对于使用cglib，解决的办法是分层实现，上层不使用cglib,下层实现使用cglib实现，比如
    controller+service层,在service层使用cglib
+   
+   
+  回话信息获取改造 
