@@ -526,7 +526,7 @@ public abstract class Route
 		catch (InvocationTargetException e)
 		{
 			e.printStackTrace();
-			return new ServerResponse(500,"服务器繁忙，稍后再试");
+			return ServerResponse.INTERNAL_ERROR;
 			//下面原来的实现
 //			Throwable cause = e.getCause();
 //			
@@ -542,7 +542,7 @@ public abstract class Route
         catch (Exception e)
         {
         	e.printStackTrace();
-        	return new ServerResponse(500,"服务器繁忙，稍后再试");
+        	return ServerResponse.INTERNAL_ERROR;
         	//下面原来的实现
 //        	throw new ServiceException(e);
         }
