@@ -40,15 +40,20 @@ bind() 添加执行spring初始化完毕后执行用户的特定对象方法
 3. 支持定制的channelHandler(用户定义的如果是shareable,请确保是线程安全，如果不是shareable,确保创建的对象足够快)
 默认用户定义的handler是放在业务线程池里执行的，可以通过参数配置线程池大小    
 
-版本1.0.5 后续计划开发
-1. 基于redis pub/sub做会话同步，去中心 /或做弱中心,同时可实现同一个用户只能在一个终端登录
-2. 实现initBinder转换其他日期格式
-3. 修改输出的xml root元素格式
+版本1.0.6 后续计划开发
+1. 基于redis实现同一个用户只能在一个终端登录（可选）
+2. 实现基于redis的重复表单提交校验
+
+后续改进
+1. 实现initBinder转换其他日期格式
+2. 修改输出的xml root元素格式
 
 需要注意的地方
    controller类，不能是被cglib修改后或代理的类(比如hibernate是使用cglib实现的，实际类名后是有$$或数字的类似的),否则会因为无法根据动态代理后的类找到
    对应的方法而无法进行url到对应类对应方法的映射,对于使用cglib，解决的办法是分层实现，上层不使用cglib,下层实现使用cglib实现，比如
    controller+service层,在service层使用cglib
+ 但是带来的问题是，controller层不能被cglib/jdk代理的话,aspect切面无法在这一层实现  
    
    
   回话信息获取改造 
+  
