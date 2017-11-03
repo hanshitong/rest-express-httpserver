@@ -17,6 +17,8 @@ public class ServerResponse {
 	
 	public static ServerResponse FORBIDDEN_ERROR = new ServerResponse(403,"禁止访问");
 	
+	public static ServerResponse REQUEST_FEQ_ERROR = new ServerResponse(1,"重复提交");
+	
 	//其他错误码,可用httpmethod httpstatus的代码
 	
 	private int code;
