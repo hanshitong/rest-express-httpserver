@@ -1,4 +1,4 @@
-package cn.my.annotation;
+package org.restexpress.annontation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

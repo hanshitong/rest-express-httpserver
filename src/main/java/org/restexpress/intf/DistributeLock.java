@@ -7,6 +7,9 @@ package org.restexpress.intf;
  *
  */
 public interface DistributeLock {
+	//确保服务可以在2分钟内执行完
+	public static final long TIME_OUT = 2 * 60 * 1000;
+	
 	boolean lock(String key,long expire);
 	void unlock(String key);
 }

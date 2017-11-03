@@ -44,6 +44,7 @@ import org.restexpress.domain.ex.ServerResponse;
 import org.restexpress.domain.ex.SessionInfo;
 import org.restexpress.intf.AuthRightIntf;
 import org.restexpress.intf.AuthorityIntf;
+import org.restexpress.intf.DistributeLock;
 import org.restexpress.intf.SessionIntf;
 import org.restexpress.url.UrlMatch;
 import org.restexpress.url.UrlMatcher;
@@ -299,7 +300,7 @@ public abstract class Route
 	/**
 	 * modify by hanst,修改这个类，参考springmvc实现参数的定义与自动注入,目前只支持
 	 * Byte,Integer,Double,String,Short,Long,Date(默认格式是yyyy-MM-dd HH:mm:ss),还有会话Session的注入，
-	 * 还有text/json,application/json形式的body方式传参
+	 * 还有application/json形式的body方式传参
 	 * 
 	 * 形式1，get
 	 * http://xxxx/param1=value1&param2=value2
@@ -308,7 +309,7 @@ public abstract class Route
 	 * http://www.xxxx.com/xxx
 	 * body:  param3=value3&param4=value4
 	 * 
-	 * 形式3 application/json text/json 方式
+	 * 形式3 application/json  方式
 	 * http://www.xxxx.com/xxx
 	 * 注意，如果使用这种方式提交，参数除了框架注入的参数(request,response,会话对象)外，只支持一个自定义参数
 	 * body:  {param3: "value3","param4":"value4"} 或者 [{id: 123, name: "abc"}]
@@ -323,12 +324,28 @@ public abstract class Route
 	@SuppressWarnings(value={"rawtypes","unchecked"})
 	public Object invoke(Request request, Response response)
 	{
-		boolean post = (request.getEffectiveHttpMethod().equals(HttpMethod.POST));
+		String ticket = request.getHeader("ticket");
+		boolean post = request.isMethodPost();
+		if (ticket != null && request.isMethodPost()){
+			DistributeLock dl = RestExpress.getSpringCtx().getBean(DistributeLock.class);
+			boolean lock = dl.lock(ticket,DistributeLock.TIME_OUT);
+			if (lock)
+			try{
+				return doInvote(request,response,post);
+			}finally{
+				dl.unlock(ticket);
+			}
+			else
+				return ServerResponse.REQUEST_FEQ_ERROR;
+		}
+		return doInvote(request,response,post);
+	}
+
+	private Object doInvote(Request request, Response response,boolean post) {
 		String contentType = request.getHeader(HttpHeaders.Names.CONTENT_TYPE);
 		boolean isjson = false;
 		if (contentType != null){ 
-			contentType = contentType.toLowerCase();
-		    isjson = contentType.indexOf("text/json") >= 0 || contentType.indexOf("application/json") >= 0;
+			isjson = contentType.toLowerCase().indexOf("application/json") >= 0;
 		}
 		
 		//因为只支持get,post
@@ -440,15 +457,6 @@ public abstract class Route
 							si = (SessionIntf) RestExpress.getSpringCtx().getBean(obj.getSessionImpl());
 							obj = null;
 							sessionInfo = si.getSession(request);
-//							HashMap<String,String> privPath = RestExpress.getConfig().getSessionByClass();
-//								if (privPath != null)
-//									for(String className: privPath.keySet())
-//										if (cls.getName().equals(className)){
-//											si = (SessionIntf) RestExpress.getSpringCtx().getBean(privPath.get(className));
-//											sessionInfo = si.getSession(request);
-//											break;
-//										}
-							 
 						}
 						values[i] = sessionInfo;
 					}
