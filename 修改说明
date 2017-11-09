@@ -43,6 +43,7 @@ bind() 添加执行spring初始化完毕后执行用户的特定对象方法
 版本1.0.6 后续计划开发
 1. 基于redis实现同一个用户只能在一个终端登录（可选）
 2. 实现基于redis的重复表单提交校验
+3. 支持自定义和默认实现http请求到controller类参数的映射SpringMVCHttpRequestParameterParseImpl，DefaultHttpRequestParameterParseImpl
 
 后续改进
 1. 实现initBinder转换其他日期格式
