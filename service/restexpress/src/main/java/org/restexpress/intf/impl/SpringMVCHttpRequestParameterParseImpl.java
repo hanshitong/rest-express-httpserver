@@ -29,7 +29,6 @@ import io.netty.handler.codec.http.HttpHeaders;
  *  
  * 实现类似springmvc controller那样申明的参数的形式 
  * 额外还有回话的注入，权限注入或验证等
- * /**
 	 * modify by hanst,修改这个类，参考springmvc实现参数的定义与自动注入,目前只支持
 	 * Byte,Integer,Double,String,Short,Long,Date(默认格式是yyyy-MM-dd HH:mm:ss),还有会话Session的注入，
 	 * 还有application/json形式的body方式传参
