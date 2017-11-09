@@ -1,0 +1,57 @@
+HttpServerChannelHandlerFactory，HttpServerSSLChannelHandlerFactory，HttpServerWebSocketChannelHandlerFactory，
+  HttpServerWebSocketSSLChannelHandlerFactory即可）
+  5. 允许自定义netty的一些重要参数，比如io线程数，worker线程数，侦听端口,ioRation等（不指定则使用默认值）
+ -
+ -关于使用
+ +6. 允许自定义在spring初始化完成后执行特定的代码，并且可以指定执行的顺序，实现SpringInitCompleteAware即可
+ +   
+ +注意的地方
+ +   上传的代码里，Route.java invote区分了实现了2会话（原因是我的最近一个产品一个应用里同时提供给app和pc端使用），使用者可以简化实现，如果服务只是给对应的一个前端应用使用，可以只实现一个会话即可，即只有一个实现SessionIntf的类。
+ +    HttpServerWebSocketChannelHandlerFactory，HttpServerWebSocketSSLChannelHandlerFactory 可能有不完善的地方，我的应用中没有使用到这2个，可能有未完善或错误的地方，如果你完善了他，请告知我，非常感谢。
+ +    
+ +使用示例
+     在spring配置文件中，增加2行
+     <bean class="org.restexpress.pipeline.factory.HttpServerChannelHandlerFactory"/> 
+     <bean class="org.restexpress.intf.impl.SpringMVCHttpRequestParameterParseImpl"/>
+     如果想自定义netty的参数，在项目工程的classpath下添加个netty.properties文件 
+ +   
+ +   controller类的定义(和springmvc一样定义)
+ +
+ +@Controller
+ +@RequestMapping("/xxx")
+ +public class xxxController {
+ +   //application/x-www-form-urlencoded post方式请求 
+ +  @RequestMapping(value="/xxx/xxx",method=RequestMethod.POST)
+ +	public Object xxxx(Request request,Response response,@RequestParam Long xxx, @RequestParam String yyyy){	
+ +		// TODO:
+ +		return ServerResponse.SUCCESS_RESPONSE;
+ +	}
+ +   
+ +   //GET请求可不写method=RequestMethod.GET,request,response如果不用到可以不申明
+ +   @RequestMapping(value="/xxx/xxx",method=RequestMethod.GET)
+ +	public Object xxxx(Request request,Response response,@RequestParam Long xxx, @RequestParam String yyyy){	
+ +		// TODO:
+ +		return ServerResponse.SUCCESS_RESPONSE;
+ +	}
+ +   
+ +   //application/json post方式请求 
+ +  @RequestMapping(value="/xxx/xxx",method=RequestMethod.POST)
+ +	public Object xxxx(ComplexObject  value){	
+ +		// TODO:
+ +		return new SuccessResult2<>(value);  //返回传入的对象,并且返回了一个状态码code: 0
+ +	}
+ +   
+ +   //application/json post方式请求,自动注入了会话信息 
+ +  @RequestMapping(value="/xxx/xxx",method=RequestMethod.POST)
+ +	public Object xxxx(ComplexObject  value,UserSessionInfo user){	
+ +		// TODO:
+ +      System.out.println(user.getXxx());
+ +		return new SuccessResult2<>(value);  //返回传入的对象,并且返回了一个状态码code: 0
+ +	}
+ +}
+  
+ +//启动应用,非常简单
+ +public void static main(String[] args)  throws Exception{
+ +   RestExpress server = new RestExpress(args);
+ +}
+  
