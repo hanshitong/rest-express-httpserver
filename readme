@@ -1,10 +1,34 @@
+扩展功能
+版本1.0.0
+1. 参考springmvc自动注入参数，对象（会话对象）,校验参数是否必传,controller,方法别名支持,参数先从get里获取，再从post获取，
+如果都传了，以post为准
+2. 对特定url请求做权限检查提供了接口,默认/priv/
+3. netty参数配置化，允许自定义netty的一些重要参数，比如io线程数，worker线程数，侦听端口,ioRation等（不指定则使用默认值）
+4. spring加载后按顺序执行用户指定的方法(实现SpringInitCompleteAware)
+5. 实现自动加载获取权限数据,可选
+6. 修改json日期输出格式
+
+版本1.0.2
+1. 增加权限AuthorityIntf,AuthRightIntf接口，实现这2个接口，然后在业务里直接注入使用
+2. 增加SystemStatIntf,实现这个接口，让运维或开发可以在telnet里输入命令查看系统状态
+3. 增加backlog配置，可以配置系统接收队列的大小
+4. 增加send buffer,receive buffer缓冲区大小配置
+5. 如果想在spring 的服务里使用spring context,请实现ApplicationContextAware接口 
+   
+版本1.0.4 
+1. 支持定制websocket
+2. 支持定制文件传输
+3. 支持定制的channelHandler(用户定义的如果是shareable,请确保是线程安全，如果不是shareable,确保创建的对象足够快)
+默认用户定义的handler是放在业务线程池里执行的，可以通过参数配置线程池大小 ，其他默认实现还有支持SSL,websocket的工厂类
 HttpServerChannelHandlerFactory，HttpServerSSLChannelHandlerFactory，HttpServerWebSocketChannelHandlerFactory，
   HttpServerWebSocketSSLChannelHandlerFactory即可）
-  5. 允许自定义netty的一些重要参数，比如io线程数，worker线程数，侦听端口,ioRation等（不指定则使用默认值）
- -
- -关于使用
- +6. 允许自定义在spring初始化完成后执行特定的代码，并且可以指定执行的顺序，实现SpringInitCompleteAware即可
- +   
+
+版本1.0.6 后续计划开发
+1. 基于redis实现同一个用户只能在一个终端登录（可选）
+2. 实现基于redis的重复表单提交校验
+3. 支持自定义和默认实现http参数请求到controller类参数的映射,默认实现类SpringMVCHttpRequestParameterParseImpl，
+   rest-express默认实现类DefaultHttpRequestParameterParseImpl
+ 
  +注意的地方
  +   上传的代码里，Route.java invote区分了实现了2会话（原因是我的最近一个产品一个应用里同时提供给app和pc端使用），使用者可以简化实现，如果服务只是给对应的一个前端应用使用，可以只实现一个会话即可，即只有一个实现SessionIntf的类。
  +    HttpServerWebSocketChannelHandlerFactory，HttpServerWebSocketSSLChannelHandlerFactory 可能有不完善的地方，我的应用中没有使用到这2个，可能有未完善或错误的地方，如果你完善了他，请告知我，非常感谢。
@@ -55,3 +79,4 @@ HttpServerChannelHandlerFactory，HttpServerSSLChannelHandlerFactory，HttpServe
  +   RestExpress server = new RestExpress(args);
  +}
   
+  浏览器里输入http://localhost:9091/xxxx
