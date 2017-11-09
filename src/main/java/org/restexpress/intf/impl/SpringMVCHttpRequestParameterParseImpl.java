@@ -55,7 +55,7 @@ public class SpringMVCHttpRequestParameterParseImpl implements HttpRequestParame
 	private static LocalVariableTableParameterNameDiscoverer localVar = new LocalVariableTableParameterNameDiscoverer();
 
 	@Override
-	public Object[] parse(Method action, Request request,Response response) throws ServiceException{
+	public Object[] parse(Method action, Request request,Response response) throws Exception{
 		String contentType = request.getHeader(HttpHeaders.Names.CONTENT_TYPE);
 		boolean isjson = false;
 		if (contentType != null){ 
@@ -65,8 +65,6 @@ public class SpringMVCHttpRequestParameterParseImpl implements HttpRequestParame
 		//对路径进行统一会话校验，如果需要权限，则用户至少需要登录
 		SessionInfo sessionInfo = null;
 		SessionIntf si = null;		
-		try
-        {
 			if (request.getPath().indexOf(RestExpress.getConfig().getPermissionCheck()) >= 0)
 			{			
 				if (si == null){
@@ -183,14 +181,8 @@ public class SpringMVCHttpRequestParameterParseImpl implements HttpRequestParame
 				i++;					 
 			}
 	        return values;	 
-        }
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			throw new ServiceException(e);
-		}
-         
-	}
+        } 
+ 
 
 	/**
 	 * 返回get里的参数和post里的参数，如果get 和post都出现，以post为准,如果是application/json  text/json
