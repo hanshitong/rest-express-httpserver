@@ -46,6 +46,7 @@ public class Configuration extends Environment {
 	private long bothIdleTimeOut = 0;
 	private int ioRation = 50;
 	private int ioSubThreadCount = 0;
+	private String requestToken = "ticket";
 	
 	public HashMap<String, String> getSessionByPath() {
 		return sessionByPath;
@@ -246,6 +247,11 @@ public class Configuration extends Environment {
 			if (ioRation <= 0 || ioRation > 100)
 				ioRation = 50;
 		}
+		
+		value = p.getProperty("requestToken");
+		if (value != null){
+			requestToken = value.trim();
+		}
 				
 		springConfigFile = p.getProperty("springConfigFile");		 
 	}
@@ -356,6 +362,14 @@ public class Configuration extends Environment {
 
 	public HashMap<String,String> getSessionByClass() {
 		return sessionByClass;
+	}
+
+	public String getRequestToken() {
+		return requestToken;
+	}
+
+	public void setRequestToken(String requestToken) {
+		this.requestToken = requestToken;
 	}
 
 }

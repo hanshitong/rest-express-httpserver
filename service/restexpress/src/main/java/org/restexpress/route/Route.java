@@ -78,8 +78,6 @@ public abstract class Route
 	private Set<String> flags = new HashSet<String>();
 	private Map<String, Object> parameters = new HashMap<String, Object>();
 	
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	
 	private static LocalVariableTableParameterNameDiscoverer localVar = new LocalVariableTableParameterNameDiscoverer();
 
 	// SECTION: CONSTRUCTORS
@@ -324,19 +322,23 @@ public abstract class Route
 	@SuppressWarnings(value={"rawtypes","unchecked"})
 	public Object invoke(Request request, Response response)
 	{
-		String ticket = request.getHeader("ticket");
+		//防止表单重复提交的实现，ticket为header里客户端传入进来的一个标志（默认为ticket,可以在netty.properties里自定义）
 		boolean post = request.isMethodPost();
-		if (ticket != null && request.isMethodPost()){
-			DistributeLock dl = RestExpress.getSpringCtx().getBean(DistributeLock.class);
-			boolean lock = dl.lock(ticket,DistributeLock.TIME_OUT);
-			if (lock)
-			try{
-				return doInvote(request,response,post);
-			}finally{
-				dl.unlock(ticket);
+		if (post){
+			String ticket = request.getHeader(RestExpress.getConfig().getRequestToken());
+			//ticket在客户端生成，生成规则是提交的表单数据+accessToken做一个md5摘要
+			if (ticket != null) {
+				DistributeLock dl = RestExpress.getSpringCtx().getBean(DistributeLock.class);
+				boolean lock = dl.lock(ticket, DistributeLock.TIME_OUT);
+				if (lock)
+					try {
+						return doInvote(request, response, post);
+					} finally {
+						dl.unlock(ticket);
+					}
+				else
+					return ServerResponse.REQUEST_FEQ_ERROR;
 			}
-			else
-				return ServerResponse.REQUEST_FEQ_ERROR;
 		}
 		return doInvote(request,response,post);
 	}
