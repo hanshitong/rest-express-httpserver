@@ -31,7 +31,6 @@ import org.restexpress.Response;
 import org.restexpress.RestExpress;
 import org.restexpress.common.util.StringUtils;
 import org.restexpress.domain.ex.ServerResponse;
-import org.restexpress.exception.BadRequestException;
 import org.restexpress.exception.ServiceException;
 import org.restexpress.intf.DistributeLock;
 import org.restexpress.intf.HttpRequestParameterParseIntf;
